@@ -151,17 +151,20 @@ CANDIDATE is a string returned by `company-lsp--make-candidate'."
          (label (gethash "label" item))
          (start (- (point) (length label)))
          (insert-text (gethash "insertText" item))
+         (insert-text-format (gethash "insertTextFormat" item))
          (text-edit (gethash "textEdit" item))
          (additional-text-edits (gethash "additionalTextEdits" item)))
     (cond
      (text-edit (lsp--apply-text-edit text-edit))
-     (insert-text
+     ((and insert-text (not (eq insert-text-format 2)))
       (cl-assert (string-equal (buffer-substring-no-properties start (point)) label))
       (goto-char start)
       (delete-char (length label))
       (insert insert-text)))
     (when additional-text-edits
-      (lsp--apply-text-edits additional-text-edits))))
+      (lsp--apply-text-edits additional-text-edits))
+    (when (and (fboundp 'yas-expand-snippet) insert-text (eq insert-text-format 2))
+      (yas-expand-snippet insert-text start (point)))))
 
 (defun company-lsp--on-completion (response prefix callback)
   "Give the server RESPONSE to company's CALLBACK.
@@ -232,6 +235,11 @@ See the documentation of `company-backends' for COMMAND and ARG."
     (annotation (lsp--annotate arg))
     (match (length arg))
     (post-completion (company-lsp--post-completion arg))))
+
+(defun company-lsp--client-capabilities ()
+  '(:textDocument (:completion (:completionItem (:snippetSupport t)))))
+
+(lsp-register-client-capabilities 'company-lsp #'company-lsp--client-capabilities)
 
 (provide 'company-lsp)
 ;;; company-lsp.el ends here
