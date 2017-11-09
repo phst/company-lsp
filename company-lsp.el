@@ -239,7 +239,9 @@ See the documentation of `company-backends' for COMMAND and ARG."
 (defun company-lsp--client-capabilities ()
   '(:textDocument (:completion (:completionItem (:snippetSupport t)))))
 
-(lsp-register-client-capabilities 'company-lsp #'company-lsp--client-capabilities)
+(add-hook 'lsp-before-initialize-hook
+          (lambda ()
+            (lsp-register-client-capabilities 'company-lsp #'company-lsp--client-capabilities)))
 
 (provide 'company-lsp)
 ;;; company-lsp.el ends here
